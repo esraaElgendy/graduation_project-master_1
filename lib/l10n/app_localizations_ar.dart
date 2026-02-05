@@ -171,4 +171,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noLectures => 'لا توجد محاضرات في هذا اليوم';
+
+  @override
+  String get level => 'المستوى';
+
+  @override
+  String get semester => 'الفصل الدراسي';
+
+  @override
+  String get creditHours => 'ساعة معتمدة';
 }

@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/bloc/auth_cubit.dart';
 import 'core/bloc/settings_cubit.dart';
 import 'core/bloc/student_cubit.dart';
+import 'core/bloc/course_cubit.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/app_preferences.dart';
 import 'features/auth/presentation/pages/login_screen.dart';
@@ -33,6 +34,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => StudentCubit(),
+        ),
+        BlocProvider(
+          create: (context) => CourseCubit(),
         ),
       ],
       child: BlocBuilder<SettingsCubit, SettingsState>(

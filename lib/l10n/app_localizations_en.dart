@@ -171,4 +171,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noLectures => 'No lectures for this day';
+
+  @override
+  String get level => 'Level';
+
+  @override
+  String get semester => 'Semester';
+
+  @override
+  String get creditHours => 'Credit Hours';
 }

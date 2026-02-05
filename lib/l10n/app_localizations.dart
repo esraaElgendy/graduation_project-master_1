@@ -421,6 +421,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No lectures for this day'**
   String get noLectures;
+
+  /// No description provided for @level.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get level;
+
+  /// No description provided for @semester.
+  ///
+  /// In en, this message translates to:
+  /// **'Semester'**
+  String get semester;
+
+  /// No description provided for @creditHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit Hours'**
+  String get creditHours;
 }
 
 class _AppLocalizationsDelegate

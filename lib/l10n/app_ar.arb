@@ -56,5 +56,8 @@
   "courseRegistration": "تسجيل المواد",
   "profile": "الملف الشخصي",
   "score": "الدرجة",
-  "noLectures": "لا توجد محاضرات في هذا اليوم"
+  "noLectures": "لا توجد محاضرات في هذا اليوم",
+  "level": "المستوى",
+  "semester": "الفصل الدراسي",
+  "creditHours": "ساعة معتمدة"
 }

@@ -10,6 +10,9 @@ class ApiConstants {
   // Student Endpoints
   static const String studentProfile = '/Student/profile';
   
+  // Course Endpoints
+  static const String allCourses = '/Courses/all';
+  
   // Timeouts
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);

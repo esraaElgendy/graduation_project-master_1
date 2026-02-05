@@ -63,5 +63,8 @@
   "courseRegistration": "Course Registration",
   "profile": "Profile",
   "score": "Score",
-  "noLectures": "No lectures for this day"
+  "noLectures": "No lectures for this day",
+  "level": "Level",
+  "semester": "Semester",
+  "creditHours": "Credit Hours"
 }

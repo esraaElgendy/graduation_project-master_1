@@ -31,17 +31,33 @@ class UserModel extends Equatable {
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id']?.toString() ?? '',
-      name: json['name'] ?? json['fullName'] ?? json['userName'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? json['phoneNumber'],
-      studentId: json['studentId']?.toString() ?? json['studentCode'],
-      major: json['major'] ?? json['department'],
-      year: json['year'] ?? json['level'],
-      gpa: (json['gpa'] ?? json['GPA'])?.toDouble(),
-      completedCreditHours: json['completedCreditHours'] ?? json['completedHours'],
-      remainingCreditHours: json['remainingCreditHours'] ?? json['remainingHours'],
-      totalCreditHours: json['totalCreditHours'] ?? json['totalHours'],
+      name: json['name']?.toString() ?? json['fullName']?.toString() ?? json['userName']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? json['phoneNumber']?.toString(),
+      studentId: json['studentId']?.toString() ?? json['studentCode']?.toString(),
+      major: json['major']?.toString() ?? json['department']?.toString(),
+      year: json['year']?.toString() ?? json['level']?.toString(),
+      gpa: _toDouble(json['gpa'] ?? json['GPA']),
+      completedCreditHours: _toInt(json['completedCreditHours'] ?? json['completedHours']),
+      remainingCreditHours: _toInt(json['remainingCreditHours'] ?? json['remainingHours']),
+      totalCreditHours: _toInt(json['totalCreditHours'] ?? json['totalHours']),
     );
+  }
+
+  static int? _toInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  static double? _toDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
   }
 
   Map<String, dynamic> toJson() {
