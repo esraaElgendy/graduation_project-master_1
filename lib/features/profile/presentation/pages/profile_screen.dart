@@ -9,8 +9,22 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/pages/login_screen.dart';
 import 'edit_profile_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Logic: Ensure we have the latest data from the backend
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StudentCubit>().loadDashboard();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +34,8 @@ class ProfileScreen extends StatelessWidget {
 
     return BlocBuilder<StudentCubit, StudentState>(
       builder: (context, state) {
-        // Default values
-        String studentName = 'Student';
+        // Implementation: Map Cubit state to Profile UI fields
+        String studentName = l10n.students;
         String studentId = '';
         String studentEmail = '';
         String studentMajor = '';
@@ -29,9 +43,12 @@ class ProfileScreen extends StatelessWidget {
         String studentPhone = '';
         double gpa = 0.0;
         int completedHours = 0;
+        int remainingHours = 0;
+        int totalHours = 0;
 
         if (state is StudentLoaded) {
-          studentName = state.user.name;
+          final langCode = Localizations.localeOf(context).languageCode;
+          studentName = state.user.getLocalizedName(langCode);
           studentId = state.user.studentId ?? '';
           studentEmail = state.user.email;
           studentMajor = state.user.major ?? '';
@@ -39,265 +56,352 @@ class ProfileScreen extends StatelessWidget {
           studentPhone = state.user.phone ?? '';
           gpa = state.user.gpa ?? 0.0;
           completedHours = state.user.completedCreditHours ?? 0;
+          remainingHours = state.user.remainingCreditHours ?? 0;
+          // ignore: unused_local_variable
+          totalHours = state.user.totalCreditHours ?? (completedHours + remainingHours);
         }
 
-        // Get initials for avatar
-        final initials = studentName.isNotEmpty
-            ? studentName.split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+        final initials = studentName.isNotEmpty && studentName != l10n.students
+            ? studentName.split(' ').where((e) => e.isNotEmpty).map((e) => e[0]).take(2).join().toUpperCase()
             : 'ST';
 
         return Scaffold(
-          body: state is StudentLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 50),
-                      // Header
-                      Center(
-                        child: Column(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: Text(
+              l10n.profile,
+              style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold),
+            ),
+            iconTheme: IconThemeData(color: theme.primaryColor),
+          ),
+          body: RefreshIndicator(
+            onRefresh: () async => context.read<StudentCubit>().loadDashboard(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  // Premium Header Design
+                  Center(
+                    child: Column(
+                      children: [
+                        Stack(
                           children: [
                             CircleAvatar(
-                              radius: 40,
-                              backgroundColor: AppColors.primary,
-                              child: Text(
-                                initials,
-                                style: GoogleFonts.cairo(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              studentName,
-                              style: GoogleFonts.cairo(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            Text(
-                              studentId,
-                              style: GoogleFonts.cairo(color: Colors.grey),
-                            ),
-                            Text(
-                              studentMajor,
-                              style: GoogleFonts.cairo(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-
-                      // Info Section
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildInfoItem(l10n.name, studentName),
-                            _buildInfoItem(l10n.email, studentEmail),
-                            _buildInfoItem(l10n.major, studentMajor),
-                            _buildInfoItem(l10n.yourYear, studentYear),
-                            _buildInfoItem(l10n.phone, studentPhone),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      // Academic Summary
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.academicSummary,
-                              style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.normal),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildSummaryCard(
-                                    context,
-                                    gpa.toStringAsFixed(2),
-                                    l10n.gba,
-                                    isDark,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildSummaryCard(
-                                    context,
-                                    completedHours.toString(),
-                                    l10n.completedCreditHours,
-                                    isDark,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      // Settings
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.settings_outlined, color: AppColors.primary),
-                                const SizedBox(width: 8),
-                                Text(
-                                  l10n.dashboard,
-                                  style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Language
-                            _buildSettingsRow(
-                              icon: Icons.language,
-                              title: l10n.language,
-                              trailing: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: isDark ? AppColors.primaryDark : const Color(0xffDBDEFF),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
+                              radius: 60,
+                              backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
+                              child: CircleAvatar(
+                                radius: 55,
+                                backgroundColor: theme.primaryColor,
                                 child: Text(
-                                  AppLocalizations.of(context)!.localeName == 'ar' ? 'العربية' : 'English',
-                                  style: GoogleFonts.cairo(color: isDark ? Colors.white : AppColors.primary, fontWeight: FontWeight.bold),
+                                  initials,
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
-                              onTap: () {
-                                context.read<SettingsCubit>().toggleLocale();
-                              },
                             ),
-
-                            // Notifications
-                            _buildSettingsRow(
-                              icon: Icons.notifications_none,
-                              title: l10n.notifications,
-                              subtitle: l10n.receiveAppNotifications,
-                              trailing: Switch(
-                                value: true,
-                                onChanged: (val) {},
-                                activeColor: AppColors.primary,
-                              ),
-                            ),
-
-                            // Dark Mode
-                            BlocBuilder<SettingsCubit, SettingsState>(
-                              builder: (context, settingsState) {
-                                return _buildSettingsRow(
-                                  icon: Icons.wb_sunny_outlined,
-                                  title: l10n.darkMode,
-                                  subtitle: "Toggle app theme",
-                                  trailing: Switch(
-                                    value: settingsState.themeMode == ThemeMode.dark,
-                                    onChanged: (value) {
-                                      context.read<SettingsCubit>().toggleTheme(value);
-                                    },
-                                    activeColor: AppColors.primary,
-                                  ),
-                                );
-                              },
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Buttons
-                            _buildActionButton(
-                              context,
-                              l10n.changePassword,
-                              Icons.lock_outline,
-                              false,
-                              () {},
-                              isDark,
-                            ),
-                            const SizedBox(height: 10),
-                            _buildActionButton(
-                              context,
-                              l10n.editProfile,
-                              null,
-                              true,
-                              () {
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen()));
-                              },
-                              isDark,
-                            ),
-
-                            const SizedBox(height: 20),
-                            ListTile(
-                              title: Text(l10n.logout, style: const TextStyle(color: Colors.red)),
-                              leading: const Icon(Icons.logout, color: Colors.red),
-                              onTap: () {
-                                context.read<AuthCubit>().logout();
-                                context.read<StudentCubit>().clearProfile();
-                                Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                                  (route) => false,
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 40),
                           ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Text(
+                          studentName,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.cairo(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : theme.primaryColor,
+                          ),
+                        ),
+                        if (studentId.isNotEmpty)
+                          Text(
+                            "${l10n.studentId}: $studentId",
+                            style: GoogleFonts.cairo(
+                              color: AppColors.textGrey,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 30),
+
+                  // Academic Summary Grid (GPA, Completed, Remaining)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.academicSummary,
+                          style: GoogleFonts.cairo(
+                            fontSize: 18, 
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildSummaryCard(
+                                context,
+                                gpa.toStringAsFixed(2),
+                                l10n.gba,
+                                Icons.star_rounded,
+                                isDark,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildSummaryCard(
+                                context,
+                                completedHours.toString(),
+                                l10n.completedCreditHours,
+                                Icons.task_alt_rounded,
+                                isDark,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildSummaryCard(
+                                context,
+                                remainingHours.toString(),
+                                l10n.remainingCreditHours,
+                                Icons.hourglass_top_rounded,
+                                isDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // User Info Details Section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.cardDark : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: isDark ? [] : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          _buildDetailItem(l10n.email, studentEmail, Icons.email_rounded, theme),
+                          _buildDetailItem(l10n.phone, studentPhone, Icons.phone_rounded, theme),
+                          _buildDetailItem(l10n.major, studentMajor, Icons.account_tree_rounded, theme),
+                          _buildDetailItem(l10n.yourYear, studentYear, Icons.calendar_today_rounded, theme, isLast: true),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // App Settings Section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.dashboard, // Using as section header
+                          style: GoogleFonts.cairo(
+                            fontSize: 18, 
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.cardDark : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: isDark ? Border.all(color: Colors.grey[800]!) : null,
+                          ),
+                          child: Column(
+                            children: [
+                              _buildSettingsTile(
+                                context: context,
+                                icon: Icons.language_rounded,
+                                title: l10n.language,
+                                trailing: Text(
+                                  AppLocalizations.of(context)!.localeName == 'ar' ? 'العربية' : 'English',
+                                  style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold),
+                                ),
+                                onTap: () => context.read<SettingsCubit>().toggleLocale(),
+                              ),
+                              const Divider(height: 1, indent: 50),
+                              BlocBuilder<SettingsCubit, SettingsState>(
+                                builder: (context, settings) {
+                                  return _buildSettingsTile(
+                                    context: context,
+                                    icon: settings.themeMode == ThemeMode.dark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                                    title: l10n.darkMode,
+                                    onTap: () {},
+                                    trailing: Switch(
+                                      value: settings.themeMode == ThemeMode.dark,
+                                      onChanged: (val) => context.read<SettingsCubit>().toggleTheme(val),
+                                      activeThumbColor: theme.primaryColor,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Action Buttons logic
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.primaryColor,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                            ),
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen())),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.edit_rounded, size: 20),
+                                const SizedBox(width: 10),
+                                Text(l10n.editProfile, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16)),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.error,
+                              side: const BorderSide(color: AppColors.error, width: 1.5),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                            ),
+                            onPressed: () {
+                              _showLogoutDialog(context);
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.logout_rounded, size: 20),
+                                const SizedBox(width: 10),
+                                Text(l10n.logout, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16)),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 50),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
   }
 
-  Widget _buildInfoItem(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildDetailItem(String label, String value, IconData icon, ThemeData theme, {bool isLast = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      child: Row(
         children: [
-          Text(title, style: GoogleFonts.cairo(color: Colors.grey, fontSize: 12)),
-          Text(value, style: GoogleFonts.cairo(fontSize: 15, fontWeight: FontWeight.w500)),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.primaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: theme.primaryColor, size: 22),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: GoogleFonts.cairo(color: AppColors.textGrey, fontSize: 13, fontWeight: FontWeight.w500)),
+                Text(
+                  value.isNotEmpty ? value : '---',
+                  style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCard(BuildContext context, String value, String label, bool isDark) {
+  Widget _buildSummaryCard(BuildContext context, String value, String label, IconData icon, bool isDark) {
+    final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : const Color(0xffDBDEFF),
-        borderRadius: BorderRadius.circular(12),
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.primaryColor.withValues(alpha: 0.1)),
+        boxShadow: isDark ? [] : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
+          Icon(icon, color: theme.primaryColor, size: 24),
+          const SizedBox(height: 10),
           Text(
             value,
             style: GoogleFonts.cairo(
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : const Color(0xff394188),
+              color: theme.primaryColor,
             ),
           ),
+          const SizedBox(height: 4),
           Text(
             label,
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.cairo(
-              fontSize: 12,
-              color: isDark ? Colors.white70 : const Color(0xff394188),
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white70 : Colors.black54,
             ),
           ),
         ],
@@ -305,61 +409,45 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingsRow({
+  Widget _buildSettingsTile({
+    required BuildContext context,
     required IconData icon,
     required String title,
-    String? subtitle,
     Widget? trailing,
-    VoidCallback? onTap,
+    required VoidCallback onTap,
   }) {
-    return InkWell(
+    return ListTile(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.primary, size: 28),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.normal)),
-                  if (subtitle != null)
-                    Text(subtitle, style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey)),
-                ],
-              ),
-            ),
-            if (trailing != null) trailing,
-          ],
-        ),
-      ),
+      leading: Icon(icon, color: Theme.of(context).primaryColor),
+      title: Text(title, style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.normal)),
+      trailing: trailing,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
     );
   }
 
-  Widget _buildActionButton(BuildContext context, String label, IconData? icon, bool isPrimary, VoidCallback onTap, bool isDark) {
-    final bgColor = isPrimary ? const Color(0xff394188) : (isDark ? AppColors.cardDark : const Color(0xffDBDEFF));
-    final fgColor = isPrimary ? Colors.white : (isDark ? Colors.white : Colors.black);
-    final iconColor = isPrimary ? Colors.white : (isDark ? Colors.white : const Color(0xff394188));
-
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: bgColor,
-          foregroundColor: fgColor,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        onPressed: onTap,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[Icon(icon, color: iconColor), const SizedBox(width: 8)],
-            Text(label, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: fgColor)),
-          ],
-        ),
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.logout),
+        content: const Text("Are you sure you want to logout?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<AuthCubit>().logout();
+              context.read<StudentCubit>().clearProfile();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            child: const Text("Logout", style: TextStyle(color: AppColors.error)),
+          ),
+        ],
       ),
     );
   }

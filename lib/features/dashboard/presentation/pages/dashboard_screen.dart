@@ -9,8 +9,26 @@ import '../../../grades/presentation/pages/grades_screen.dart';
 import '../../../profile/presentation/pages/profile_screen.dart';
 import '../../../schedule/presentation/pages/schedule_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Logic: Fetch dashboard data immediately from backend on screen load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchData();
+    });
+  }
+
+  void _fetchData() {
+    context.read<StudentCubit>().loadDashboard();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,178 +36,260 @@ class DashboardScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final cardBgColor = isDark ? AppColors.cardDark : const Color(0xffE0E4FF);
-    final lightCardBg = isDark ? AppColors.primaryDark : const Color(0xffBDC3FF);
-
-    return BlocBuilder<StudentCubit, StudentState>(
+    return BlocConsumer<StudentCubit, StudentState>(
+      listener: (context, state) {
+        if (state is StudentError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message), 
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
       builder: (context, state) {
-        // Default values (fallback)
-        String studentName = 'Student';
+        // Implementation: Map Cubit state to UI variables
+        String studentName = l10n.students;
+        String studentId = '';
         double gpa = 0.0;
         int completedHours = 0;
         int remainingHours = 0;
-        int totalHours = 160;
+        int totalHours = 0;
+        double progressValue = 0.0;
 
         if (state is StudentLoaded) {
-          studentName = state.user.name;
+          final langCode = Localizations.localeOf(context).languageCode;
+          studentName = state.user.getLocalizedName(langCode);
+          studentId = state.user.studentId ?? '';
           gpa = state.user.gpa ?? 0.0;
           completedHours = state.user.completedCreditHours ?? 0;
           remainingHours = state.user.remainingCreditHours ?? 0;
-          totalHours = state.user.totalCreditHours ?? 160;
+          totalHours = state.user.totalCreditHours ?? (completedHours + remainingHours);
+          progressValue = state.user.overallProgress ?? 0.0;
         }
 
-        final progress = totalHours > 0 ? completedHours / totalHours : 0.0;
+        final progress = totalHours > 0 
+            ? (progressValue > 0 ? progressValue / 100.0 : (completedHours / totalHours))
+            : 0.0;
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            automaticallyImplyLeading: false,
             title: Text(
               l10n.dashboard,
-              style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: theme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             actions: [
+              IconButton(
+                tooltip: "Reload data",
+                icon: Icon(Icons.refresh, color: theme.primaryColor),
+                onPressed: _fetchData,
+              ),
               IconButton(
                 icon: Icon(Icons.notifications_none, color: theme.primaryColor),
                 onPressed: () {},
               ),
             ],
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            automaticallyImplyLeading: false,
           ),
-          body: state is StudentLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          studentName,
-                          style: GoogleFonts.cairo(
-                            fontSize: 16,
-                            fontWeight: FontWeight.normal,
+          body: Stack(
+            children: [
+              RefreshIndicator(
+                onRefresh: () async => _fetchData(),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Section: Name & ID Logic
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            studentName,
+                            style: GoogleFonts.cairo(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : theme.primaryColor,
+                            ),
+                          ),
+                          if (studentId.isNotEmpty)
+                            Text(
+                              "${l10n.studentId}: $studentId",
+                              style: GoogleFonts.cairo(
+                                fontSize: 14,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Stats Grid Logic: Displaying Grade and Hours
+                      _buildStatCard(
+                        context: context,
+                        title: l10n.gba, // GBA label from localization
+                        value: gpa.toStringAsFixed(2),
+                        icon: Icons.analytics,
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildStatCard(
+                        context: context,
+                        title: l10n.completedCreditHours,
+                        value: completedHours.toString(),
+                        icon: Icons.check_circle_outline,
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildStatCard(
+                        context: context,
+                        title: l10n.remainingCreditHours,
+                        value: remainingHours.toString(),
+                        icon: Icons.hourglass_empty,
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Overall Progress Logic
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.cardDark : AppColors.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark ? Colors.grey[800]! : AppColors.primary.withValues(alpha: 0.1),
                           ),
                         ),
-                        const SizedBox(height: 20),
-
-                        // GBA Card
-                        _buildStatCard(
-                          context,
-                          l10n.gba,
-                          gpa.toStringAsFixed(2),
-                          Icons.analytics,
-                          cardBgColor,
-                          lightCardBg,
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Completed Hours Card
-                        _buildStatCard(
-                          context,
-                          l10n.completedCreditHours,
-                          completedHours.toString(),
-                          Icons.check_circle_outline,
-                          cardBgColor,
-                          lightCardBg,
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Remaining Hours Card
-                        _buildStatCard(
-                          context,
-                          l10n.remainingCreditHours,
-                          remainingHours.toString(),
-                          Icons.hourglass_empty,
-                          cardBgColor,
-                          lightCardBg,
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Overall Progress
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.cardDark : Colors.blue[50],
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l10n.overallProgress,
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(l10n.completedCreditHours),
-                                  Text("$completedHours / $totalHours"),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              LinearProgressIndicator(
-                                value: progress,
-                                backgroundColor: isDark ? Colors.grey[700] : Colors.white,
-                                color: theme.primaryColor,
-                                minHeight: 10,
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                "${(progress * 100).toStringAsFixed(1)}% ${l10n.overallProgress}",
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Grid Menu
-                        GridView.count(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildMenuCard(context, l10n.courseRegistration, Icons.book, () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const CoursesScreen()));
-                            }),
-                            _buildMenuCard(context, l10n.mySchedule, Icons.calendar_today, () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const ScheduleScreen()));
-                            }),
-                            _buildMenuCard(context, l10n.myGrades, Icons.school, () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const GradesScreen()));
-                            }),
-                            _buildMenuCard(context, l10n.profile, Icons.person, () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
-                            }),
+                            Text(
+                              l10n.overallProgress,
+                              style: GoogleFonts.cairo(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "${(progress * 100).toStringAsFixed(1)}% ${l10n.overallProgress}",
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 13,
+                                    color: AppColors.textGrey,
+                                  ),
+                                ),
+                                Text(
+                                  "$completedHours / $totalHours",
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(5),
+                              child: LinearProgressIndicator(
+                                value: progress.clamp(0.0, 1.0),
+                                minHeight: 10,
+                                backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+                                valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
+                              ),
+                            ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Navigation Menu Grid
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        children: [
+                          _buildMenuCard(
+                            context,
+                            l10n.courseRegistration,
+                            Icons.app_registration,
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CoursesScreen())),
+                          ),
+                          _buildMenuCard(
+                            context,
+                            l10n.mySchedule,
+                            Icons.calendar_month,
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScheduleScreen())),
+                          ),
+                          _buildMenuCard(
+                            context,
+                            l10n.myGrades,
+                            Icons.grade,
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GradesScreen())),
+                          ),
+                          _buildMenuCard(
+                            context,
+                            l10n.profile,
+                            Icons.person_outline,
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 50),
+                    ],
                   ),
                 ),
+              ),
+              
+              // Loading State Overlay
+              if (state is StudentLoading && studentName == l10n.students)
+                Container(
+                  color: theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+            ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color bgColor, Color iconBgColor) {
+  Widget _buildStatCard({
+    required BuildContext context,
+    required String title,
+    required String value,
+    required IconData icon,
+    required bool isDark,
+  }) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: isDark ? AppColors.cardDark : AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border(left: BorderSide(color: theme.primaryColor, width: 6)),
+        border: Border(
+          left: BorderSide(color: theme.primaryColor, width: 6),
+        ),
+        boxShadow: isDark ? [] : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -199,16 +299,16 @@ class DashboardScreen extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(
+                style: GoogleFonts.cairo(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white70 : Colors.black87,
+                  color: isDark ? Colors.white70 : Colors.black54,
                 ),
               ),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 28,
+                style: GoogleFonts.cairo(
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: theme.primaryColor,
                 ),
@@ -216,14 +316,13 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           Container(
-            width: 50,
-            height: 50,
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: isDark ? Colors.grey[800] : Colors.white,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: Colors.blue),
-          )
+            child: Icon(icon, color: AppColors.primary, size: 28),
+          ),
         ],
       ),
     );
@@ -233,23 +332,43 @@ class DashboardScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppColors.cardDark : const Color(0xffE0E4FF),
-          borderRadius: BorderRadius.circular(16),
+          color: isDark ? AppColors.cardDark : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: isDark ? Border.all(color: Colors.grey[800]!, width: 0.5) : null,
+          boxShadow: isDark ? [] : [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleAvatar(
-              backgroundColor: theme.primaryColor,
-              radius: 25,
-              child: Icon(icon, color: Colors.white, size: 30),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.primaryColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: theme.primaryColor, size: 30),
             ),
-            const SizedBox(height: 10),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.cairo(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
           ],
         ),
       ),

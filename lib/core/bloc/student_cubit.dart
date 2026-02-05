@@ -42,14 +42,13 @@ class StudentCubit extends Cubit<StudentState> {
       : _studentRepository = studentRepository ?? StudentRepository(),
         super(StudentInitial());
 
-  /// Load student profile from API
-  Future<void> loadProfile() async {
+  /// Load student dashboard from API
+  Future<void> loadDashboard() async {
     emit(StudentLoading());
     try {
-      final user = await _studentRepository.getProfile();
+      final user = await _studentRepository.getDashboard();
       emit(StudentLoaded(user));
     } on ApiException catch (e) {
-      // Try to load cached data
       final cachedUser = await _studentRepository.getCachedProfile();
       if (cachedUser != null) {
         emit(StudentLoaded(cachedUser));
@@ -57,7 +56,29 @@ class StudentCubit extends Cubit<StudentState> {
         emit(StudentError(e.message));
       }
     } catch (e) {
-      // Try to load cached data
+      final cachedUser = await _studentRepository.getCachedProfile();
+      if (cachedUser != null) {
+        emit(StudentLoaded(cachedUser));
+      } else {
+        emit(StudentError('Failed to load dashboard: ${e.toString()}'));
+      }
+    }
+  }
+
+  /// Load student profile from API
+  Future<void> loadProfile() async {
+    emit(StudentLoading());
+    try {
+      final user = await _studentRepository.getProfile();
+      emit(StudentLoaded(user));
+    } on ApiException catch (e) {
+      final cachedUser = await _studentRepository.getCachedProfile();
+      if (cachedUser != null) {
+        emit(StudentLoaded(cachedUser));
+      } else {
+        emit(StudentError(e.message));
+      }
+    } catch (e) {
       final cachedUser = await _studentRepository.getCachedProfile();
       if (cachedUser != null) {
         emit(StudentLoaded(cachedUser));

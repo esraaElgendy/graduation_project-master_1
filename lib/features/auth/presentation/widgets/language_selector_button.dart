@@ -12,11 +12,11 @@ class LanguageSelectorButton extends StatelessWidget {
         final isArabic = state.locale.languageCode == 'ar';
         return Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor.withOpacity(0.8),
+            color: Theme.of(context).cardColor.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),

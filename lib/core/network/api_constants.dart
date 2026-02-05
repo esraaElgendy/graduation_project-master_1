@@ -9,6 +9,7 @@ class ApiConstants {
   
   // Student Endpoints
   static const String studentProfile = '/Student/profile';
+  static const String dashboard = '/Dashboard';
   
   // Course Endpoints
   static const String allCourses = '/Courses/all';

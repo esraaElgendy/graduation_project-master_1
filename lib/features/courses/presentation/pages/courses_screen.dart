@@ -135,7 +135,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                                       context, course, l10n, isDark)),
                             ],
                           );
-                        }).toList(),
+                        }),
                         const SizedBox(height: 20),
                       ],
                     );

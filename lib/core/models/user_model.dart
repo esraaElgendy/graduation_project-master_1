@@ -4,6 +4,8 @@ import 'package:equatable/equatable.dart';
 class UserModel extends Equatable {
   final String id;
   final String name;
+  final String? nameAr;
+  final String? nameEn;
   final String email;
   final String? phone;
   final String? studentId;
@@ -13,10 +15,13 @@ class UserModel extends Equatable {
   final int? completedCreditHours;
   final int? remainingCreditHours;
   final int? totalCreditHours;
+  final double? overallProgress;
 
   const UserModel({
     required this.id,
     required this.name,
+    this.nameAr,
+    this.nameEn,
     required this.email,
     this.phone,
     this.studentId,
@@ -26,21 +31,25 @@ class UserModel extends Equatable {
     this.completedCreditHours,
     this.remainingCreditHours,
     this.totalCreditHours,
+    this.overallProgress,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id']?.toString() ?? '',
+      id: json['id']?.toString() ?? json['studentID']?.toString() ?? '',
       name: json['name']?.toString() ?? json['fullName']?.toString() ?? json['userName']?.toString() ?? '',
+      nameAr: json['nameAr']?.toString(),
+      nameEn: json['nameEn']?.toString(),
       email: json['email']?.toString() ?? '',
       phone: json['phone']?.toString() ?? json['phoneNumber']?.toString(),
-      studentId: json['studentId']?.toString() ?? json['studentCode']?.toString(),
+      studentId: json['studentId']?.toString() ?? json['studentCode']?.toString() ?? json['studentID']?.toString(),
       major: json['major']?.toString() ?? json['department']?.toString(),
       year: json['year']?.toString() ?? json['level']?.toString(),
-      gpa: _toDouble(json['gpa'] ?? json['GPA']),
+      gpa: _toDouble(json['gpa'] ?? json['GPA'] ?? json['gba']),
       completedCreditHours: _toInt(json['completedCreditHours'] ?? json['completedHours']),
       remainingCreditHours: _toInt(json['remainingCreditHours'] ?? json['remainingHours']),
       totalCreditHours: _toInt(json['totalCreditHours'] ?? json['totalHours']),
+      overallProgress: _toDouble(json['overallProgress']),
     );
   }
 
@@ -64,6 +73,8 @@ class UserModel extends Equatable {
     return {
       'id': id,
       'name': name,
+      'nameAr': nameAr,
+      'nameEn': nameEn,
       'email': email,
       'phone': phone,
       'studentId': studentId,
@@ -73,12 +84,15 @@ class UserModel extends Equatable {
       'completedCreditHours': completedCreditHours,
       'remainingCreditHours': remainingCreditHours,
       'totalCreditHours': totalCreditHours,
+      'overallProgress': overallProgress,
     };
   }
 
   UserModel copyWith({
     String? id,
     String? name,
+    String? nameAr,
+    String? nameEn,
     String? email,
     String? phone,
     String? studentId,
@@ -88,10 +102,13 @@ class UserModel extends Equatable {
     int? completedCreditHours,
     int? remainingCreditHours,
     int? totalCreditHours,
+    double? overallProgress,
   }) {
     return UserModel(
       id: id ?? this.id,
       name: name ?? this.name,
+      nameAr: nameAr ?? this.nameAr,
+      nameEn: nameEn ?? this.nameEn,
       email: email ?? this.email,
       phone: phone ?? this.phone,
       studentId: studentId ?? this.studentId,
@@ -101,6 +118,7 @@ class UserModel extends Equatable {
       completedCreditHours: completedCreditHours ?? this.completedCreditHours,
       remainingCreditHours: remainingCreditHours ?? this.remainingCreditHours,
       totalCreditHours: totalCreditHours ?? this.totalCreditHours,
+      overallProgress: overallProgress ?? this.overallProgress,
     );
   }
 
@@ -108,6 +126,8 @@ class UserModel extends Equatable {
   List<Object?> get props => [
         id,
         name,
+        nameAr,
+        nameEn,
         email,
         phone,
         studentId,
@@ -117,5 +137,13 @@ class UserModel extends Equatable {
         completedCreditHours,
         remainingCreditHours,
         totalCreditHours,
+        overallProgress,
       ];
+
+  String getLocalizedName(String langCode) {
+    if (langCode == 'ar') {
+      return (nameAr != null && nameAr!.isNotEmpty) ? nameAr! : name;
+    }
+    return (nameEn != null && nameEn!.isNotEmpty) ? nameEn! : name;
+  }
 }

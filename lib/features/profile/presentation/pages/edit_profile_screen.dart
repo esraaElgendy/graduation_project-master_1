@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 //import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_constants.dart';
-import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../l10n/app_localizations.dart'; // Reuse if possible or create new
 
 class EditProfileScreen extends StatefulWidget {

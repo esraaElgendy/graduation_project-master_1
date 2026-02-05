@@ -41,7 +41,7 @@ class GradesScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -74,7 +74,7 @@ class GradesScreen extends StatelessWidget {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: _getGradeColor(grade["grade"]!).withOpacity(0.2),
+                      color: _getGradeColor(grade["grade"]!).withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,

@@ -87,8 +87,8 @@ class _SplashWrapperState extends State<SplashWrapper> {
     final authState = context.read<AuthCubit>().state;
 
     if (authState is AuthAuthenticated) {
-      // User is logged in, load profile and go to main screen
-      context.read<StudentCubit>().loadProfile();
+      // User is logged in, load dashboard and go to main screen
+      context.read<StudentCubit>().loadDashboard();
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainScreen()),
       );

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 //import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../courses/presentation/pages/courses_screen.dart';
 import '../../../profile/presentation/pages/profile_screen.dart';

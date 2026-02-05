@@ -52,8 +52,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          // Load profile and navigate to main screen
-          context.read<StudentCubit>().loadProfile();
+          // Load dashboard and navigate to main screen
+          context.read<StudentCubit>().loadDashboard();
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const MainScreen()),
           );
