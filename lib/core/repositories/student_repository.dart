@@ -1,11 +1,11 @@
 import 'dart:convert';
-import '../models/user_model.dart';
 import '../models/dashboard_model.dart';
+import '../models/user_model.dart';
 import '../network/api_client.dart';
 import '../network/api_constants.dart';
 import '../utils/app_preferences.dart';
 
-/// Repository for student/profile operations
+/// Repository for student-related data
 class StudentRepository {
   final ApiClient _apiClient;
   final AppPreferences _preferences;
@@ -24,7 +24,7 @@ class StudentRepository {
     final userData = response['data'] ?? response['user'] ?? response;
     final user = UserModel.fromJson(userData);
 
-    // Merge logic: Prioritize fresh API data, fallback to cache for missing fields
+    // Merge logic: Preserve fields like GPA that might not be in the profile response
     final cachedData = await getCachedProfile();
     final updatedUser = cachedData != null 
         ? cachedData.copyWith(
@@ -67,14 +67,20 @@ class StudentRepository {
 
     // Merge Logic: Connect backend Dashboard data to the unified UserModel
     final cachedData = await getCachedProfile();
-    final updatedUser = cachedData != null 
+    final updatedUser = cachedData != null
         ? cachedData.copyWith(
             nameAr: dashboard.nameAr.isNotEmpty ? dashboard.nameAr : cachedData.nameAr,
             nameEn: dashboard.nameEn.isNotEmpty ? dashboard.nameEn : cachedData.nameEn,
-            gpa: dashboard.gpa > 0 ? dashboard.gpa : cachedData.gpa,
-            completedCreditHours: dashboard.completedCreditHours > 0 ? dashboard.completedCreditHours : cachedData.completedCreditHours,
-            remainingCreditHours: dashboard.remainingCreditHours > 0 ? dashboard.remainingCreditHours : cachedData.remainingCreditHours,
-            overallProgress: dashboard.overallProgress > 0 ? dashboard.overallProgress : cachedData.overallProgress,
+            gpa: dashboard.gpa > 0 ? dashboard.gpa : (cachedData.gpa ?? 0.0),
+            completedCreditHours: dashboard.completedCreditHours > 0 
+                ? dashboard.completedCreditHours 
+                : (cachedData.completedCreditHours ?? 0),
+            remainingCreditHours: dashboard.remainingCreditHours > 0 
+                ? dashboard.remainingCreditHours 
+                : (cachedData.remainingCreditHours ?? 0),
+            overallProgress: dashboard.overallProgress > 0 
+                ? dashboard.overallProgress 
+                : (cachedData.overallProgress ?? 0.0),
             studentId: dashboard.studentID.isNotEmpty ? dashboard.studentID : cachedData.studentId,
           )
         : UserModel(
@@ -82,7 +88,7 @@ class StudentRepository {
             name: dashboard.nameEn.isNotEmpty ? dashboard.nameEn : (dashboard.nameAr.isNotEmpty ? dashboard.nameAr : 'Student'),
             nameAr: dashboard.nameAr,
             nameEn: dashboard.nameEn,
-            email: '', 
+            email: '',
             studentId: dashboard.studentID,
             gpa: dashboard.gpa,
             completedCreditHours: dashboard.completedCreditHours,
@@ -94,10 +100,15 @@ class StudentRepository {
     return updatedUser;
   }
 
-  /// Get cached profile tracker (Offline Support)
+  /// Save student profile to cache
+  Future<void> saveProfile(UserModel user) async {
+    await _preferences.saveUserData(jsonEncode(user.toJson()));
+  }
+
+  /// Get cached student profile
   Future<UserModel?> getCachedProfile() async {
     final userData = await _preferences.getUserData();
-    if (userData != null && userData.isNotEmpty) {
+    if (userData != null) {
       try {
         return UserModel.fromJson(jsonDecode(userData));
       } catch (e) {
@@ -105,5 +116,80 @@ class StudentRepository {
       }
     }
     return null;
+  }
+
+  /// Update student profile
+  Future<UserModel> updateProfile({
+    required String studentID,
+    required String name,
+    required String email,
+    required String major,
+    required String year,
+    required String phone,
+    String lang = 'en',
+  }) async {
+    final response = await _apiClient.put(
+      "${ApiConstants.editProfile}?lang=$lang",
+      body: {
+        'studentID': studentID,
+        'name': name,
+        'email': email,
+        'major': major,
+        'year': year,
+        'phone': phone,
+      },
+      requiresAuth: true,
+    );
+
+    final userData = response['data'] ?? response['user'] ?? response;
+    final user = UserModel.fromJson(userData);
+
+    // Merge logic: Prioritize fresh API data first, then user's INPUT data, then fallback to cache
+    final cachedData = await getCachedProfile();
+    
+    // Initial merge with cached data to preserve GPA, progress, etc.
+    UserModel merged = cachedData ?? user;
+    
+    // Explicitly apply the values that were successfully sent to the server
+    merged = merged.copyWith(
+      id: studentID.isNotEmpty ? studentID : merged.id,
+      name: name.isNotEmpty ? name : merged.name,
+      email: email.isNotEmpty ? email : merged.email,
+      major: major.isNotEmpty ? major : merged.major,
+      year: year.isNotEmpty ? year : merged.year,
+      phone: phone.isNotEmpty ? phone : merged.phone,
+    );
+
+    // Finally Overlay API response data which might contain enriched info or IDs
+    final updatedUser = merged.copyWith(
+      id: user.id.isNotEmpty ? user.id : merged.id,
+      name: user.name.isNotEmpty ? user.name : merged.name,
+      nameAr: (user.nameAr != null && user.nameAr!.isNotEmpty) 
+          ? user.nameAr 
+          : (user.name.isNotEmpty && lang == 'ar' ? user.name : (lang == 'ar' && name.isNotEmpty ? name : merged.nameAr)),
+      nameEn: (user.nameEn != null && user.nameEn!.isNotEmpty)
+          ? user.nameEn
+          : (user.name.isNotEmpty && lang == 'en' ? user.name : (lang == 'en' && name.isNotEmpty ? name : merged.nameEn)),
+      email: user.email.isNotEmpty ? user.email : merged.email,
+      phone: user.phone ?? merged.phone,
+      studentId: user.studentId ?? merged.studentId,
+      major: user.major ?? merged.major,
+      year: user.year ?? merged.year,
+      gpa: (user.gpa != null && user.gpa! > 0) ? user.gpa : (merged.gpa ?? 0.0),
+      completedCreditHours: (user.completedCreditHours != null && user.completedCreditHours! > 0) 
+          ? user.completedCreditHours 
+          : merged.completedCreditHours,
+      remainingCreditHours: (user.remainingCreditHours != null && user.remainingCreditHours! > 0)
+          ? user.remainingCreditHours
+          : merged.remainingCreditHours,
+      totalCreditHours: user.totalCreditHours ?? merged.totalCreditHours,
+      overallProgress: (user.overallProgress != null && user.overallProgress! > 0)
+          ? user.overallProgress
+          : merged.overallProgress,
+    );
+
+    // Save to preferences
+    await _preferences.saveUserData(jsonEncode(updatedUser.toJson()));
+    return updatedUser;
   }
 }

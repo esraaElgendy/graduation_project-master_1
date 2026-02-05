@@ -37,7 +37,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return BlocBuilder<StudentCubit, StudentState>(
+    return BlocConsumer<StudentCubit, StudentState>(
+      listener: (context, state) {
+        if (state is StudentError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
       builder: (context, state) {
         // Implementation: Map Cubit state to Profile UI fields
         String studentName = l10n.students;
@@ -52,18 +63,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
         int totalHours = 0;
 
         if (state is StudentLoaded) {
+          final user = state.user;
           final langCode = Localizations.localeOf(context).languageCode;
-          studentName = state.user.getLocalizedName(langCode);
-          studentId = state.user.studentId ?? '';
-          studentEmail = state.user.email;
-          studentMajor = state.user.major ?? '';
-          studentYear = state.user.year ?? '';
-          studentPhone = state.user.phone ?? '';
-          gpa = state.user.gpa ?? 0.0;
-          completedHours = state.user.completedCreditHours ?? 0;
-          remainingHours = state.user.remainingCreditHours ?? 0;
-          // ignore: unused_local_variable
-          totalHours = state.user.totalCreditHours ?? (completedHours + remainingHours);
+          studentName = user.getLocalizedName(langCode);
+          studentId = user.studentId ?? '';
+          studentEmail = user.email;
+          studentMajor = user.major ?? '';
+          studentYear = user.year ?? '';
+          studentPhone = user.phone ?? '';
+          gpa = user.gpa ?? 0.0;
+          completedHours = user.completedCreditHours ?? 0;
+          remainingHours = user.remainingCreditHours ?? 0;
+          // totalHours calculation removed as it was unused
+        } else if (state is StudentLoading && state.previousUser != null) {
+          final user = state.previousUser!;
+          final langCode = Localizations.localeOf(context).languageCode;
+          studentName = user.getLocalizedName(langCode);
+          studentId = user.studentId ?? '';
+          studentEmail = user.email;
+          studentMajor = user.major ?? '';
+          studentYear = user.year ?? '';
+          studentPhone = user.phone ?? '';
+          gpa = user.gpa ?? 0.0;
+          completedHours = user.completedCreditHours ?? 0;
+          remainingHours = user.remainingCreditHours ?? 0;
+        } else if (state is StudentError && state.previousUser != null) {
+          final user = state.previousUser!;
+          final langCode = Localizations.localeOf(context).languageCode;
+          studentName = user.getLocalizedName(langCode);
+          studentId = user.studentId ?? '';
+          studentEmail = user.email;
+          studentMajor = user.major ?? '';
+          studentYear = user.year ?? '';
+          studentPhone = user.phone ?? '';
+          gpa = user.gpa ?? 0.0;
+          completedHours = user.completedCreditHours ?? 0;
+          remainingHours = user.remainingCreditHours ?? 0;
         }
 
         final initials = studentName.isNotEmpty && studentName != l10n.students

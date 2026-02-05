@@ -68,6 +68,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
           remainingHours = state.user.remainingCreditHours ?? 0;
           totalHours = state.user.totalCreditHours ?? (completedHours + remainingHours);
           progressValue = state.user.overallProgress ?? 0.0;
+        } else if (state is StudentLoading && state.previousUser != null) {
+          final user = state.previousUser!;
+          final langCode = Localizations.localeOf(context).languageCode;
+          studentName = user.getLocalizedName(langCode);
+          studentId = user.studentId ?? '';
+          gpa = user.gpa ?? 0.0;
+          completedHours = user.completedCreditHours ?? 0;
+          remainingHours = user.remainingCreditHours ?? 0;
+          totalHours = user.totalCreditHours ?? (completedHours + remainingHours);
+          progressValue = user.overallProgress ?? 0.0;
+        } else if (state is StudentError && state.previousUser != null) {
+          final user = state.previousUser!;
+          final langCode = Localizations.localeOf(context).languageCode;
+          studentName = user.getLocalizedName(langCode);
+          studentId = user.studentId ?? '';
+          gpa = user.gpa ?? 0.0;
+          completedHours = user.completedCreditHours ?? 0;
+          remainingHours = user.remainingCreditHours ?? 0;
+          totalHours = user.totalCreditHours ?? (completedHours + remainingHours);
+          progressValue = user.overallProgress ?? 0.0;
         }
 
         final progress = totalHours > 0 

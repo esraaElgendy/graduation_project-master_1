@@ -47,7 +47,7 @@ class ApiClient {
     bool requiresAuth = false,
   }) async {
     try {
-      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final uri = Uri.parse(_getEndpoint(endpoint));
       final headers = await _getHeaders(requiresAuth: requiresAuth);
 
       final response = await _httpClient
@@ -65,13 +65,58 @@ class ApiClient {
     }
   }
 
+  /// PUT request
+  Future<Map<String, dynamic>> put(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    bool requiresAuth = true,
+  }) async {
+    try {
+      final uri = Uri.parse(_getEndpoint(endpoint));
+      final headers = await _getHeaders(requiresAuth: requiresAuth);
+
+      final response = await _httpClient
+          .put(
+            uri,
+            headers: headers,
+            body: body != null ? jsonEncode(body) : null,
+          )
+          .timeout(ApiConstants.connectionTimeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Network error: ${e.toString()}');
+    }
+  }
+
+  /// DELETE request
+  Future<Map<String, dynamic>> delete(
+    String endpoint, {
+    bool requiresAuth = true,
+  }) async {
+    try {
+      final uri = Uri.parse(_getEndpoint(endpoint));
+      final headers = await _getHeaders(requiresAuth: requiresAuth);
+
+      final response = await _httpClient
+          .delete(uri, headers: headers)
+          .timeout(ApiConstants.connectionTimeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Network error: ${e.toString()}');
+    }
+  }
+
   /// GET request
   Future<Map<String, dynamic>> get(
     String endpoint, {
     bool requiresAuth = true,
   }) async {
     try {
-      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final uri = Uri.parse(_getEndpoint(endpoint));
       final headers = await _getHeaders(requiresAuth: requiresAuth);
 
       final response = await _httpClient
@@ -83,6 +128,12 @@ class ApiClient {
       if (e is ApiException) rethrow;
       throw ApiException('Network error: ${e.toString()}');
     }
+  }
+
+  /// Helper to get full endpoint URL
+  String _getEndpoint(String endpoint) {
+    if (endpoint.startsWith('http')) return endpoint;
+    return '${ApiConstants.baseUrl}$endpoint';
   }
 
   /// Handle HTTP response

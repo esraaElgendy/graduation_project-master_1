@@ -14,7 +14,13 @@ abstract class StudentState extends Equatable {
 
 class StudentInitial extends StudentState {}
 
-class StudentLoading extends StudentState {}
+class StudentLoading extends StudentState {
+  final UserModel? previousUser;
+  const StudentLoading({this.previousUser});
+
+  @override
+  List<Object?> get props => [previousUser];
+}
 
 class StudentLoaded extends StudentState {
   final UserModel user;
@@ -27,11 +33,12 @@ class StudentLoaded extends StudentState {
 
 class StudentError extends StudentState {
   final String message;
+  final UserModel? previousUser;
 
-  const StudentError(this.message);
+  const StudentError(this.message, {this.previousUser});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, previousUser];
 }
 
 // Student Cubit
@@ -44,7 +51,8 @@ class StudentCubit extends Cubit<StudentState> {
 
   /// Load student dashboard from API
   Future<void> loadDashboard({String lang = 'en'}) async {
-    emit(StudentLoading());
+    final currentUser = state is StudentLoaded ? (state as StudentLoaded).user : null;
+    emit(StudentLoading(previousUser: currentUser));
     try {
       final user = await _studentRepository.getDashboard();
       emit(StudentLoaded(user));
@@ -53,21 +61,22 @@ class StudentCubit extends Cubit<StudentState> {
       if (cachedUser != null) {
         emit(StudentLoaded(cachedUser));
       } else {
-        emit(StudentError(e.message));
+        emit(StudentError(e.message, previousUser: currentUser));
       }
     } catch (e) {
       final cachedUser = await _studentRepository.getCachedProfile();
       if (cachedUser != null) {
         emit(StudentLoaded(cachedUser));
       } else {
-        emit(StudentError('Failed to load dashboard: ${e.toString()}'));
+        emit(StudentError('Failed to load dashboard: ${e.toString()}', previousUser: currentUser));
       }
     }
   }
 
   /// Load student profile from API
   Future<void> loadProfile({String lang = 'en'}) async {
-    emit(StudentLoading());
+    final currentUser = state is StudentLoaded ? (state as StudentLoaded).user : null;
+    emit(StudentLoading(previousUser: currentUser));
     try {
       final user = await _studentRepository.getProfile(lang: lang);
       emit(StudentLoaded(user));
@@ -76,14 +85,14 @@ class StudentCubit extends Cubit<StudentState> {
       if (cachedUser != null) {
         emit(StudentLoaded(cachedUser));
       } else {
-        emit(StudentError(e.message));
+        emit(StudentError(e.message, previousUser: currentUser));
       }
     } catch (e) {
       final cachedUser = await _studentRepository.getCachedProfile();
       if (cachedUser != null) {
         emit(StudentLoaded(cachedUser));
       } else {
-        emit(StudentError('Failed to load profile: ${e.toString()}'));
+        emit(StudentError('Failed to load profile: ${e.toString()}', previousUser: currentUser));
       }
     }
   }
@@ -99,5 +108,35 @@ class StudentCubit extends Cubit<StudentState> {
   /// Clear profile data
   void clearProfile() {
     emit(StudentInitial());
+  }
+
+  /// Update student profile
+  Future<void> updateProfile({
+    required String studentID,
+    required String name,
+    required String email,
+    required String major,
+    required String year,
+    required String phone,
+    String lang = 'en',
+  }) async {
+    final currentUser = state is StudentLoaded ? (state as StudentLoaded).user : null;
+    emit(StudentLoading(previousUser: currentUser));
+    try {
+      final user = await _studentRepository.updateProfile(
+        studentID: studentID,
+        name: name,
+        email: email,
+        major: major,
+        year: year,
+        phone: phone,
+        lang: lang,
+      );
+      emit(StudentLoaded(user));
+    } on ApiException catch (e) {
+      emit(StudentError(e.message, previousUser: currentUser));
+    } catch (e) {
+      emit(StudentError('Failed to update profile: ${e.toString()}', previousUser: currentUser));
+    }
   }
 }
