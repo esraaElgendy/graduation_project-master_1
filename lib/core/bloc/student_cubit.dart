@@ -43,7 +43,7 @@ class StudentCubit extends Cubit<StudentState> {
         super(StudentInitial());
 
   /// Load student dashboard from API
-  Future<void> loadDashboard() async {
+  Future<void> loadDashboard({String lang = 'en'}) async {
     emit(StudentLoading());
     try {
       final user = await _studentRepository.getDashboard();
@@ -66,10 +66,10 @@ class StudentCubit extends Cubit<StudentState> {
   }
 
   /// Load student profile from API
-  Future<void> loadProfile() async {
+  Future<void> loadProfile({String lang = 'en'}) async {
     emit(StudentLoading());
     try {
-      final user = await _studentRepository.getProfile();
+      final user = await _studentRepository.getProfile(lang: lang);
       emit(StudentLoaded(user));
     } on ApiException catch (e) {
       final cachedUser = await _studentRepository.getCachedProfile();

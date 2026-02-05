@@ -20,18 +20,18 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController idController = TextEditingController();
+  final TextEditingController yearController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
     nameController.dispose();
     emailController.dispose();
-    phoneController.dispose();
     passwordController.dispose();
     idController.dispose();
+    yearController.dispose();
     super.dispose();
   }
 
@@ -44,8 +44,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
             name: nameController.text.trim(),
             email: emailController.text.trim(),
             password: passwordController.text,
-            phone: phoneController.text.trim(),
             studentId: idController.text.trim(),
+            year: yearController.text.trim(),
             language: currentLocale,
           );
     }
@@ -109,16 +109,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               const SizedBox(height: 16),
 
                               CustomTextField(
-                                label: l10n.phone,
-                                controller: phoneController,
-                                keyboardType: TextInputType.phone,
+                                label: l10n.email,
+                                controller: emailController,
+                                keyboardType: TextInputType.emailAddress,
                               ),
                               const SizedBox(height: 16),
 
                               CustomTextField(
-                                label: l10n.email,
-                                controller: emailController,
-                                keyboardType: TextInputType.emailAddress,
+                                label: l10n.yourYear,
+                                controller: yearController,
                               ),
                               const SizedBox(height: 16),
 
@@ -132,6 +131,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               CustomTextField(
                                 label: l10n.studentId,
                                 controller: idController,
+                                keyboardType: TextInputType.number,
                               ),
                               const SizedBox(height: 24),
 

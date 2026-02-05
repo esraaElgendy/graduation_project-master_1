@@ -22,8 +22,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     // Logic: Ensure we have the latest data from the backend
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StudentCubit>().loadDashboard();
+      _fetchProfile();
     });
+  }
+
+  void _fetchProfile() {
+    final lang = Localizations.localeOf(context).languageCode;
+    context.read<StudentCubit>().loadProfile(lang: lang);
   }
 
   @override
@@ -77,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             iconTheme: IconThemeData(color: theme.primaryColor),
           ),
           body: RefreshIndicator(
-            onRefresh: () async => context.read<StudentCubit>().loadDashboard(),
+            onRefresh: () async => _fetchProfile(),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(

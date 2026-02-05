@@ -49,8 +49,8 @@ class AuthRepository {
     required String name,
     required String email,
     required String password,
-    required String phone,
     required String studentId,
+    required String year,
     required String language,
   }) async {
     final response = await _apiClient.post(
@@ -60,10 +60,10 @@ class AuthRepository {
         'fullName': name,
         'email': email,
         'password': password,
-        'phone': phone,
-        'phoneNumber': phone,
         'studentId': studentId,
         'studentCode': studentId,
+        'year': year,
+        'level': year,
         'language': language,
         'Language': language,
       },

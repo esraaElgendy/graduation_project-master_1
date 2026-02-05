@@ -27,7 +27,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _fetchData() {
-    context.read<StudentCubit>().loadDashboard();
+    final lang = Localizations.localeOf(context).languageCode;
+    context.read<StudentCubit>().loadDashboard(lang: lang);
   }
 
   @override

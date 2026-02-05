@@ -15,9 +15,9 @@ class StudentRepository {
         _preferences = preferences ?? AppPreferences();
 
   /// Get student profile from API
-  Future<UserModel> getProfile() async {
+  Future<UserModel> getProfile({String lang = 'en'}) async {
     final response = await _apiClient.get(
-      ApiConstants.studentProfile,
+      "${ApiConstants.studentProfile}?lang=$lang",
       requiresAuth: true,
     );
 
