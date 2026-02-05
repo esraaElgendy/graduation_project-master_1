@@ -1,13 +1,13 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-//import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'core/bloc/auth_cubit.dart';
 import 'core/bloc/settings_cubit.dart';
+import 'core/bloc/student_cubit.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/app_preferences.dart';
-import 'features/auth/presentation/pages/login_screen.dart'; // Changed to LoginScreen as per logic
-import 'features/auth/presentation/pages/sign_up_screen.dart';
+import 'features/auth/presentation/pages/login_screen.dart';
+import 'features/dashboard/presentation/pages/main_screen.dart';
 import 'features/splash/splash_screen.dart';
 import 'l10n/app_localizations.dart';
 
@@ -21,17 +21,29 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => SettingsCubit(AppPreferences()),
+    final appPreferences = AppPreferences();
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => SettingsCubit(appPreferences),
+        ),
+        BlocProvider(
+          create: (context) => AuthCubit()..checkAuthStatus(),
+        ),
+        BlocProvider(
+          create: (context) => StudentCubit(),
+        ),
+      ],
       child: BlocBuilder<SettingsCubit, SettingsState>(
-        builder: (context, state) {
+        builder: (context, settingsState) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'Student Portal',
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
-            themeMode: state.themeMode,
-            locale: state.locale,
+            themeMode: settingsState.themeMode,
+            locale: settingsState.locale,
             localizationsDelegates: [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
@@ -50,31 +62,42 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class SplashWrapper extends StatelessWidget {
+class SplashWrapper extends StatefulWidget {
   const SplashWrapper({super.key});
-  
+
+  @override
+  State<SplashWrapper> createState() => _SplashWrapperState();
+}
+
+class _SplashWrapperState extends State<SplashWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    _navigateAfterSplash();
+  }
+
+  Future<void> _navigateAfterSplash() async {
+    await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return;
+
+    final authState = context.read<AuthCubit>().state;
+
+    if (authState is AuthAuthenticated) {
+      // User is logged in, load profile and go to main screen
+      context.read<StudentCubit>().loadProfile();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+      );
+    } else {
+      // User is not logged in, go to login screen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Navigate using simple Future.delayed
-    Future.delayed(const Duration(seconds: 3), () {
-      if (context.mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const SignUpScreen()), // Or LoginScreen, starting with SignUp as per original code flow, but Plan said Login. Original main had Splash -> SignUp. 
-          // Wait, original main.dart had specific logic.
-          // Original: Splash -> SignUp.
-          // I will follow that flow but maybe Login is better?
-          // Screenshots show Login and SignUp.
-          // Usually Splash -> Login.
-          // I'll route to SignUpScreen as requested by existing code logic but better to check if logged in.
-          // For now, I'll stick to LoginScreen as the start actually, it makes more sense.
-          // BUT the user's code had `Navigator.pushReplacement(..., Sign_upScreen())`.
-          // Let's use LoginScreen as it's more standard, and SignUp is reachable from Login.
-          // Wait, the screenshots show "Faculty of Engineering Student Portal" login screen.
-          // I'll route to LoginScreen.
-        );
-      }
-    });
-    
     return const SplashScreen();
   }
 }
