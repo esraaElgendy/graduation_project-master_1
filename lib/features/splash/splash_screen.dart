@@ -45,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     Future.delayed(const Duration(milliseconds: 500), () => c1.forward());
     Future.delayed(const Duration(milliseconds: 1500), () => c2.forward());
     Future.delayed(const Duration(milliseconds: 2500), () => c3.forward());
-    
+
     // Navigation handled by wrapper in main.dart, but standard practice is here too.
     // However, main.dart has logic. I will let main.dart handle it or handle it here.
     // The wrapper in main.dart handles it.
@@ -117,3 +117,108 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+// import 'package:flutter/material.dart';
+// import 'package:google_fonts/google_fonts.dart';
+// import '../../l10n/app_localizations.dart';
+//
+// class SplashScreen extends StatefulWidget {
+//   const SplashScreen({super.key});
+//
+//   @override
+//   State<SplashScreen> createState() => _SplashScreenState();
+// }
+//
+// class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+//   late AnimationController controller;
+//   late Animation<double> scaleAnimation;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//
+//     // Controller واحد لكل العناصر
+//     controller = AnimationController(
+//       vsync: this,
+//       duration: const Duration(milliseconds: 1200),
+//     );
+//
+//     // Scale من صغير لكبير (Zoom)
+//     scaleAnimation = Tween<double>(begin: 0.1, end: 1).animate(
+//       CurvedAnimation(parent: controller, curve: Curves.easeOutBack),
+//     );
+//
+//     // شغل الأنيميشن
+//     controller.forward();
+//   }
+//
+//   @override
+//   void dispose() {
+//     controller.dispose();
+//     super.dispose();
+//   }
+//
+//   Widget zoomItem(Widget child) {
+//     return ScaleTransition(
+//       scale: scaleAnimation,
+//       child: child,
+//     );
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+//       body: Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             zoomItem(
+//               Text(
+//                 AppLocalizations.of(context)!.facultyName,
+//                 style: GoogleFonts.notoNastaliqUrdu(
+//                   fontSize: 27,
+//                   fontWeight: FontWeight.bold,
+//                   color: Theme.of(context).primaryColor,
+//                 ),
+//               ),
+//             ),
+//             const SizedBox(height: 20),
+//             zoomItem(
+//               Text(
+//                 AppLocalizations.of(context)!.universityName,
+//                 style: GoogleFonts.notoNastaliqUrdu(
+//                   fontSize: 27,
+//                   fontWeight: FontWeight.bold,
+//                   color: Theme.of(context).primaryColor,
+//                 ),
+//               ),
+//             ),
+//             const SizedBox(height: 40),
+//             zoomItem(
+//               Image.asset(
+//                 "assets/ChatGPT Image Nov 22, 2025, 07_36_03 PM.png",
+//                 width: 300,
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+
+
+
+

@@ -5,6 +5,7 @@ import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../widgets/auth_header.dart';
 import 'login_screen.dart';
+import '../widgets/language_selector_button.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -19,101 +20,114 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController idController = TextEditingController(); // Added ID
-  // Year Selector?
-  
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+    final isArabic = Directionality.of(context) == TextDirection.rtl;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const AuthHeader(),
-                const SizedBox(height: 30),
-                
-                CustomTextField(label: l10n.name, controller: nameController),
-                const SizedBox(height: 16),
-                
-                CustomTextField(label: l10n.phone, controller: phoneController, keyboardType: TextInputType.phone),
-                const SizedBox(height: 16),
-                
-                CustomTextField(label: l10n.email, controller: emailController, keyboardType: TextInputType.emailAddress),
-                const SizedBox(height: 16),
-                
-                CustomTextField(label: l10n.password, controller: passwordController, isPassword: true),
-                const SizedBox(height: 16),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const AuthHeader(),
+                      const SizedBox(height: 30),
 
-                // Added Student ID to match requirements
-                CustomTextField(label: l10n.studentId, controller: idController), 
-                
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 60,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Navigate to Login or Dashboard after mock signup
-                       Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      );
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.person_add, size: 25),
-                        const SizedBox(width: 10),
-                        Text(
-                          l10n.signUp,
-                          style: GoogleFonts.cairo(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                      CustomTextField(label: l10n.name, controller: nameController),
+                      const SizedBox(height: 16),
+
+                      CustomTextField(label: l10n.phone, controller: phoneController, keyboardType: TextInputType.phone),
+                      const SizedBox(height: 16),
+
+                      CustomTextField(label: l10n.email, controller: emailController, keyboardType: TextInputType.emailAddress),
+                      const SizedBox(height: 16),
+
+                      CustomTextField(label: l10n.password, controller: passwordController, isPassword: true),
+                      const SizedBox(height: 16),
+
+                      CustomTextField(label: l10n.studentId, controller: idController),
+                      const SizedBox(height: 24),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const LoginScreen()),
+                            );
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.person_add, size: 25),
+                              const SizedBox(width: 10),
+                              Text(
+                                l10n.signUp,
+                                style: GoogleFonts.cairo(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            l10n.alreadyHaveAccount,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                              );
+                            },
+                            child: Text(
+                              l10n.login,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).primaryColor,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                
-                const SizedBox(height: 16),
-                
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      l10n.alreadyHaveAccount,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                         Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        );
-                      },
-                      child: Text(
-                        l10n.login,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(context).primaryColor,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+
+              // زر اختيار اللغة
+              Row(
+                mainAxisAlignment: isArabic ? MainAxisAlignment.end : MainAxisAlignment.start,
+                children: const [
+                  LanguageSelectorButton(),
+                ],
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
+
+

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-//import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../widgets/auth_header.dart';
 import 'sign_up_screen.dart';
 import '../../../../features/dashboard/presentation/pages/main_screen.dart';
+import '../widgets/language_selector_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(
@@ -33,28 +34,27 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const AuthHeader(),
                 const SizedBox(height: 30),
-                
+
                 CustomTextField(
-                  label: l10n.email, 
-                  controller: emailController, 
-                  keyboardType: TextInputType.emailAddress
+                  label: l10n.email,
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 16),
-                
+
                 CustomTextField(
-                  label: l10n.password, 
-                  controller: passwordController, 
-                  isPassword: true
+                  label: l10n.password,
+                  controller: passwordController,
+                  isPassword: true,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 SizedBox(
                   width: double.infinity,
                   height: 60,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Login Logic
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -76,15 +76,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       l10n.dontHaveAccount,
-                       style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
@@ -106,6 +106,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 40),
+
+                /// زرار اللغة تحت يمين
+                // Align(
+                //   alignment: Alignment.bottomRight,
+                //   child: const LanguageSelectorButton(),
+                // ),
+
+                const SizedBox(height: 10),
               ],
             ),
           ),
@@ -114,3 +124,5 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
+
